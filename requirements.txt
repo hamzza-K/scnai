@@ -1,0 +1,10 @@
+azure-core
+azure-devops
+fastapi
+python-dotenv
+msrest
+numpy
+openai
+polars
+scikit-learn
+uvicorn[standard]
