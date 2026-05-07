@@ -1,4 +1,5 @@
 azure-core
+azure-cosmos
 azure-devops
 fastapi
 python-dotenv

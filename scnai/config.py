@@ -43,6 +43,11 @@ class Settings:
     azure_openai_embedding_api_version: str
     embed_batch_size: int
     default_iteration_path: str
+    cosmos_endpoint: str | None
+    cosmos_key: str | None
+    cosmos_database: str | None
+    cosmos_container: str | None
+    cosmos_partition_key_field: str
 
 
 def load_settings() -> Settings:
@@ -67,5 +72,12 @@ def load_settings() -> Settings:
         embed_batch_size=int(os.getenv("EMBED_BATCH_SIZE", "16")),
         default_iteration_path=os.getenv(
             "DEFAULT_ITERATION_PATH", r"POMS\POMSnet\Aquila\2026.1.0"
+        ),
+        cosmos_endpoint=os.getenv("COSMOS_ENDPOINT"),
+        cosmos_key=os.getenv("COSMOS_KEY"),
+        cosmos_database=os.getenv("COSMOS_DATABASE"),
+        cosmos_container=os.getenv("COSMOS_CONTAINER"),
+        cosmos_partition_key_field=os.getenv(
+            "COSMOS_PARTITION_KEY_FIELD", "document_type"
         ),
     )

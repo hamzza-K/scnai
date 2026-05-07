@@ -37,6 +37,22 @@ class UserStoriesResponse(BaseModel):
     stories: list[UserStoryRow]
 
 
+class BugRow(BaseModel):
+    id: int
+    title: str
+    description: str
+    severity: Any
+    state: Any
+    area_path: Any
+    iteration_path: Any
+    tags: str
+
+
+class BugsResponse(BaseModel):
+    bug_count: int
+    bugs: list[BugRow]
+
+
 class StoryClusterRow(BaseModel):
     cluster: int
     id: int
@@ -55,3 +71,15 @@ class ClusterResponse(BaseModel):
     story_count: int
     summary: list[ClusterSummaryRow]
     stories: list[StoryClusterRow]
+
+
+class SaveRequest(BaseModel):
+    document: dict[str, Any]
+    id: str | None = None
+    partition_key: str | None = None
+
+
+class SaveResponse(BaseModel):
+    id: str
+    partition_key: str
+    status: str
