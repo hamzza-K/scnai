@@ -12,7 +12,7 @@ from scnai.config import Settings
 logger = logging.getLogger(__name__)
 
 WIQL_TEMPLATE = """
-SELECT [System.Id], [System.Title],
+SELECT [System.Id], [System.Rev], [System.Title],
        [System.Description], [System.IterationPath], [System.AreaPath],
        [Custom.WeightedPriority], [Custom.ValidationRequirements],
        [Microsoft.VSTS.Common.AcceptanceCriteria], [POMS.ResolutionSummary],
@@ -57,6 +57,9 @@ def fetch_user_stories(wit_client: Any, iteration_path: str) -> list[dict[str, A
         fields = work_item.fields
         story = {
             "id": work_item.id,
+            "rev": fields.get("System.Rev")
+            if fields.get("System.Rev") is not None
+            else getattr(work_item, "rev", None),
             "title": fields.get("System.Title", ""),
             "description": fields.get("System.Description", ""),
             "validation_requirements": fields.get("Custom.ValidationRequirements", ""),
@@ -88,7 +91,7 @@ def fetch_bugs(wit_client: Any, iteration_path: str) -> list[dict[str, Any]]:
         bug = {
             "id": work_item.id,
             "title": fields.get("System.Title", ""),
-            "description": fields.get("System.Description", ""),
+            "repro_steps": fields.get("Microsoft.VSTS.TCM.ReproSteps", ""),
             "severity": fields.get("Microsoft.VSTS.Common.Severity", "N/A"),
             "state": fields.get("System.State", "N/A"),
             "area_path": fields.get("System.AreaPath", "N/A"),

@@ -13,7 +13,10 @@ from fastapi import FastAPI
 from scnai.api.routes import router
 from scnai.config import load_settings
 from scnai.services.ado import build_wit_client
-from scnai.services.cosmos import build_cosmos_container
+from scnai.services.cosmos import (
+    build_cosmos_container,
+    build_embeddings_cache_container,
+)
 from scnai.services.embedder import build_embedding_client
 
 logging.basicConfig(
@@ -31,6 +34,9 @@ async def lifespan(app: FastAPI):
     cosmos_client, cosmos_container = build_cosmos_container(settings)
     app.state.cosmos_client = cosmos_client
     app.state.cosmos_container = cosmos_container
+    app.state.cosmos_embeddings_container = build_embeddings_cache_container(
+        settings
+    )
     yield
 
 

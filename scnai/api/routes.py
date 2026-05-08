@@ -42,15 +42,24 @@ def get_cosmos_container(request: Request) -> Any:
     return request.app.state.cosmos_container
 
 
+def get_cosmos_embeddings_container(request: Request) -> Any:
+    return request.app.state.cosmos_embeddings_container
+
+
 def _result_to_response(result: ClusteringResult) -> ClusterResponse:
     stories = [
         StoryClusterRow(
             cluster=int(row["cluster"]),
             id=int(row["id"]),
             title=str(row["title"]),
+            description=str(row["description"]),
+            validation_requirements=str(row["validation_requirements"]),
+            acceptance_criteria=str(row["acceptance_criteria"]),
+            resolution_summary=str(row["resolution_summary"]),
             weighted_priority=row["weighted_priority"],
             area_path=row["area_path"],
             iteration_path=row["iteration_path"],
+            tags=str(row["tags"]),
         )
         for row in result.stories_table.to_dicts()
     ]
@@ -97,12 +106,15 @@ def _bugs_to_list_response(
         BugRow(
             id=int(b["id"]),
             title=normalize_text(b["title"]),
-            description=normalize_text(b["description"]),
+            repro_steps=normalize_text(b["repro_steps"]),
             severity=b["severity"],
             state=b["state"],
             area_path=b["area_path"],
             iteration_path=b["iteration_path"],
             tags=normalize_text(b["tags"]),
+            resolution_summary=normalize_text(b["resolution_summary"]),
+            notes=normalize_text(b["notes"]),
+            analysis=normalize_text(b["analysis"]),
         )
         for b in bugs
     ]
@@ -115,6 +127,7 @@ def cluster_user_stories_post(
     settings: Annotated[Settings, Depends(get_app_settings)],
     wit_client: Annotated[Any, Depends(get_wit_client)],
     embedding_client: Annotated[AzureOpenAI, Depends(get_embedding_client)],
+    embedding_cache: Annotated[Any, Depends(get_cosmos_embeddings_container)],
 ) -> ClusterResponse:
     """
     Fetch user stories from Azure DevOps for the given iteration path, embed them
@@ -128,6 +141,7 @@ def cluster_user_stories_post(
         path,
         eps=body.eps,
         min_samples=body.min_samples,
+        embedding_cache_container=embedding_cache,
     )
     return _result_to_response(result)
 

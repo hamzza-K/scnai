@@ -40,12 +40,15 @@ class UserStoriesResponse(BaseModel):
 class BugRow(BaseModel):
     id: int
     title: str
-    description: str
+    repro_steps: str
     severity: Any
     state: Any
     area_path: Any
     iteration_path: Any
     tags: str
+    resolution_summary: str
+    notes: str
+    analysis: str
 
 
 class BugsResponse(BaseModel):
@@ -57,9 +60,14 @@ class StoryClusterRow(BaseModel):
     cluster: int
     id: int
     title: str
+    description: str
+    validation_requirements: str
+    acceptance_criteria: str
+    resolution_summary: str
     weighted_priority: Any
     area_path: Any
     iteration_path: Any
+    tags: str
 
 
 class ClusterSummaryRow(BaseModel):

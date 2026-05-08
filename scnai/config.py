@@ -47,6 +47,7 @@ class Settings:
     cosmos_key: str | None
     cosmos_database: str | None
     cosmos_container: str | None
+    cosmos_embeddings_container: str | None
     cosmos_partition_key_field: str
 
 
@@ -77,6 +78,7 @@ def load_settings() -> Settings:
         cosmos_key=os.getenv("COSMOS_KEY"),
         cosmos_database=os.getenv("COSMOS_DATABASE"),
         cosmos_container=os.getenv("COSMOS_CONTAINER"),
+        cosmos_embeddings_container=os.getenv("COSMOS_EMBEDDINGS_CONTAINER"),
         cosmos_partition_key_field=os.getenv(
             "COSMOS_PARTITION_KEY_FIELD", "document_type"
         ),

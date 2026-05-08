@@ -28,9 +28,16 @@ def build_output_table(
                 "cluster": int(label),
                 "id": story["id"],
                 "title": normalize_text(story["title"]),
+                "description": normalize_text(story["description"]),
+                "validation_requirements": normalize_text(
+                    story["validation_requirements"]
+                ),
+                "acceptance_criteria": normalize_text(story["acceptance_criteria"]),
+                "resolution_summary": normalize_text(story["resolution_summary"]),
                 "weighted_priority": story["weighted_priority"],
                 "area_path": story["area_path"],
                 "iteration_path": story["iteration_path"],
+                "tags": normalize_text(story["tags"]),
             }
         )
     return pl.DataFrame(rows).sort(["cluster", "weighted_priority", "id"])

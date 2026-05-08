@@ -10,7 +10,7 @@ from openai import AzureOpenAI
 from scnai.config import Settings
 from scnai.services.ado import fetch_user_stories
 from scnai.services.clustering import build_output_table, cluster_documents
-from scnai.services.embedder import embed_documents
+from scnai.services.embedding_cache import embed_user_story_documents_with_cache
 from scnai.text import build_story_documents
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,7 @@ def run_clustering(
     iteration_path: str,
     eps: float,
     min_samples: int,
+    embedding_cache_container: Any | None = None,
 ) -> ClusteringResult:
     stories = fetch_user_stories(wit_client, iteration_path)
     if not stories:
@@ -39,9 +40,14 @@ def run_clustering(
                 "cluster": pl.Int64,
                 "id": pl.Int64,
                 "title": pl.Utf8,
+                "description": pl.Utf8,
+                "validation_requirements": pl.Utf8,
+                "acceptance_criteria": pl.Utf8,
+                "resolution_summary": pl.Utf8,
                 "weighted_priority": pl.Utf8,
                 "area_path": pl.Utf8,
                 "iteration_path": pl.Utf8,
+                "tags": pl.Utf8,
             }
         )
         empty_summary = pl.DataFrame(
@@ -54,11 +60,12 @@ def run_clustering(
         )
 
     documents = build_story_documents(stories)
-    embeddings = embed_documents(
-        embedding_client,
-        settings.azure_openai_embedding_deployment,
+    embeddings = embed_user_story_documents_with_cache(
+        stories,
         documents,
-        settings.embed_batch_size,
+        settings,
+        embedding_client,
+        embedding_cache_container,
     )
     labels = cluster_documents(embeddings, eps=eps, min_samples=min_samples)
     output_table = build_output_table(stories, labels)
