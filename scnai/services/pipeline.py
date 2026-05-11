@@ -32,6 +32,7 @@ def run_clustering(
     min_samples: int,
     embedding_cache_container: Any | None = None,
 ) -> ClusteringResult:
+
     stories = fetch_user_stories(wit_client, iteration_path)
     if not stories:
         logger.info("No user stories matched WIQL for iteration_path=%s", iteration_path)

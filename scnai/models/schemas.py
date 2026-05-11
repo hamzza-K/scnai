@@ -11,6 +11,7 @@ class ClusterParams(BaseModel):
         description="Azure DevOps iteration path root (WIQL UNDER). "
         "If omitted, uses DEFAULT_ITERATION_PATH from the environment.",
     )
+
     eps: float = Field(
         default=0.15,
         ge=0.0,

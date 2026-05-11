@@ -136,6 +136,7 @@ def cluster_user_stories_post(
     path = _resolve_iteration_path(settings, body.iteration_path)
     result = run_clustering(
         settings,
+        body.scn,
         wit_client,
         embedding_client,
         path,
@@ -154,7 +155,7 @@ def list_user_stories_get(
     wit_client: Any = Depends(get_wit_client),
 ) -> UserStoriesResponse:
     """
-    Fetch user stories from Azure DevOps for the iteration path only (no embeddings or clustering).
+    Fetch user stories from Azure DevOps for the iteration path only (no embeddings or clustering). If scn is True, fetch SCN user stories.
     """
     path = _resolve_iteration_path(settings, iteration_path)
     if scn: stories = fetch_scn_user_stories(wit_client, path)
