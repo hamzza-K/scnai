@@ -19,7 +19,7 @@ from scnai.models.schemas import (
     UserStoriesResponse,
     UserStoryRow,
 )
-from scnai.services.ado import fetch_bugs, fetch_user_stories
+from scnai.services.ado import fetch_bugs, fetch_scn_bugs, fetch_user_stories, fetch_scn_user_stories
 from scnai.services.pipeline import ClusteringResult, run_clustering
 from scnai.text import normalize_text
 
@@ -149,6 +149,7 @@ def cluster_user_stories_post(
 @router.get("/cluster", response_model=UserStoriesResponse)
 def list_user_stories_get(
     iteration_path: str | None = None,
+    scn: bool = False,
     settings: Settings = Depends(get_app_settings),
     wit_client: Any = Depends(get_wit_client),
 ) -> UserStoriesResponse:
@@ -156,13 +157,15 @@ def list_user_stories_get(
     Fetch user stories from Azure DevOps for the iteration path only (no embeddings or clustering).
     """
     path = _resolve_iteration_path(settings, iteration_path)
-    stories = fetch_user_stories(wit_client, path)
+    if scn: stories = fetch_scn_user_stories(wit_client, path)
+    else: stories = fetch_user_stories(wit_client, path)
     return _stories_to_list_response(stories)
 
 
 @router.get("/bugs", response_model=BugsResponse)
 def list_bugs_get(
     iteration_path: str | None = None,
+    scn: bool = False,
     settings: Settings = Depends(get_app_settings),
     wit_client: Any = Depends(get_wit_client),
 ) -> BugsResponse:
@@ -170,7 +173,8 @@ def list_bugs_get(
     Fetch bugs from Azure DevOps for the iteration path (no embeddings or clustering).
     """
     path = _resolve_iteration_path(settings, iteration_path)
-    bugs = fetch_bugs(wit_client, path)
+    if scn: bugs = fetch_scn_bugs(wit_client, path)
+    else: bugs = fetch_bugs(wit_client, path)
     return _bugs_to_list_response(bugs)
 
 
