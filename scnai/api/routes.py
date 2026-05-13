@@ -136,7 +136,6 @@ def cluster_user_stories_post(
     path = _resolve_iteration_path(settings, body.iteration_path)
     result = run_clustering(
         settings,
-        body.scn,
         wit_client,
         embedding_client,
         path,
