@@ -8,7 +8,11 @@ from typing import Any
 from docxtpl import DocxTemplate
 
 from scnai.config import Settings
-from scnai.models.schemas import WorkbenchIndexUpsertBody, WorkbenchStoryPayload
+from scnai.models.schemas import (
+    WorkbenchBugPayload,
+    WorkbenchIndexUpsertBody,
+    WorkbenchStoryPayload,
+)
 
 
 def _repo_root() -> Path:
@@ -37,6 +41,50 @@ def _cluster_display_name(cluster_id: int, group_names: dict[str, str]) -> str:
     return group_names.get(str(cluster_id), f"Cluster {cluster_id}")
 
 
+def _bug_row_dict(b: WorkbenchBugPayload) -> dict[str, Any]:
+    summary = (b.ai_summary or "").strip()
+    if not summary:
+        summary = (b.analysis or "").strip()
+    return {
+        "ai_summary": summary,
+        "severity": (b.severity or "").strip(),
+        "area_path": (b.area_path or "").strip(),
+        "id": b.id,
+    }
+
+
+def _build_bug_clusters(body: WorkbenchIndexUpsertBody) -> list[dict[str, Any]]:
+    bugs_snap = body.bugs_snapshot
+    if not bugs_snap or not bugs_snap.bugs:
+        return []
+
+    by_cid: dict[int | None, list[WorkbenchBugPayload]] = {}
+    for b in bugs_snap.bugs:
+        by_cid.setdefault(b.cluster, []).append(b)
+
+    order = list(body.ui.cluster_order)
+    seen = set(order)
+    int_keys = {k for k in by_cid if k is not None}
+    rest = sorted(int_keys - seen)
+    ordered_ids: list[int | None] = [c for c in order if c in by_cid] + [
+        c for c in rest if c in by_cid
+    ]
+    if None in by_cid:
+        ordered_ids.append(None)
+
+    out: list[dict[str, Any]] = []
+    for cid in ordered_ids:
+        rows_src = by_cid[cid]
+        rows_src.sort(key=lambda x: x.id)
+        name = (
+            _cluster_display_name(cid, body.group_names_by_cluster)
+            if cid is not None
+            else "Unclustered"
+        )
+        out.append({"cluster_name": name, "bugs": [_bug_row_dict(b) for b in rows_src]})
+    return out
+
+
 def build_workbench_docx_context(body: WorkbenchIndexUpsertBody) -> dict[str, Any]:
     """
     Context for ``templates/workbench_report_tpl.docx`` (docxtpl).
@@ -55,7 +103,11 @@ def build_workbench_docx_context(body: WorkbenchIndexUpsertBody) -> dict[str, An
       ``{"feature_id": int, "feature_desc": str}`` so ``.items()`` works in Jinja.
 
     - ``cluster``: nested ``[{ "name", "stories": [...] }]`` for custom templates.
-    - ``bugs_table``: ``[{ "id", "ai_summary" }, ...]``.
+    - ``bugs_table``: flat ``[{ "ai_summary", "severity", "area_path", "id" }, ...]``
+      (same row shape as bugs inside ``bug_clusters``); ``ai_summary`` falls back
+      to ``analysis`` when the payload has no AI summary.
+    - ``bug_clusters``: ``[{ "cluster_name", "bugs": [...] }, ...]`` for ``{% tr %}``
+      tables keyed by optional ``WorkbenchBugPayload.cluster``.
     """
     cluster_nested: list[dict[str, Any]] = []
     cluster_blocks: list[dict[str, Any]] = []
@@ -100,17 +152,17 @@ def build_workbench_docx_context(body: WorkbenchIndexUpsertBody) -> dict[str, An
     bugs_table: list[dict[str, Any]] = []
     bugs_snap = body.bugs_snapshot
     if bugs_snap and bugs_snap.bugs:
-        bugs_table = [
-            {"id": b.id, "ai_summary": (b.ai_summary or "").strip()}
-            for b in bugs_snap.bugs
-        ]
+        bugs_table = [_bug_row_dict(b) for b in bugs_snap.bugs]
+
+    bug_clusters = _build_bug_clusters(body)
 
     return {
-        "iteration_key": body.iteration_key.strip(),
+        "iteration_key": body.iteration_key.strip().split('\\')[-1],
         "date": _format_date(body.client_meta.saved_at_iso),
         "cluster": cluster_nested,
         "cluster_blocks": cluster_blocks,
         "bugs_table": bugs_table,
+        "bug_clusters": bug_clusters,
     }
 
 

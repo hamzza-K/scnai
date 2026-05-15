@@ -127,6 +127,7 @@ class WorkbenchClusterSnapshotPayload(BaseModel):
 
 class WorkbenchBugPayload(BaseModel):
     id: int
+    cluster: int | None = None
     title: str = ""
     repro_steps: str = ""
     severity: str = ""
