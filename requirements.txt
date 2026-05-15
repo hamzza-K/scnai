@@ -7,5 +7,6 @@ msrest
 numpy
 openai
 polars
+docxtpl
 scikit-learn
 uvicorn[standard]

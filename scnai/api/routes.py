@@ -4,6 +4,7 @@ from uuid import uuid4
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response
 from openai import AzureOpenAI
 
 from scnai.config import Settings
@@ -18,9 +19,14 @@ from scnai.models.schemas import (
     StoryClusterRow,
     UserStoriesResponse,
     UserStoryRow,
+    WorkbenchIndexUpsertBody,
 )
 from scnai.services.ado import fetch_bugs, fetch_scn_bugs, fetch_user_stories, fetch_scn_user_stories
 from scnai.services.pipeline import ClusteringResult, run_clustering
+from scnai.services.workbench_docx_report import (
+    render_workbench_docx_bytes,
+    resolve_workbench_template_path,
+)
 from scnai.text import normalize_text
 
 router = APIRouter(prefix="/api/v1", tags=["clustering"])
@@ -214,4 +220,35 @@ def save_document_post(
         id=str(saved["id"]),
         partition_key=str(saved[partition_field]),
         status="saved",
+    )
+
+
+@router.post("/workbench-index/upsert")
+def workbench_index_upsert_post(
+    body: WorkbenchIndexUpsertBody,
+    settings: Settings = Depends(get_app_settings),
+) -> Response:
+    """
+    Render ``WorkbenchIndexUpsertBody`` into the docxtpl template (default:
+    ``templates/workbench_report_tpl.docx``) and return the .docx as a download.
+
+    Override template path with ``WORKBENCH_DOCX_TEMPLATE`` in the environment.
+    """
+    tpl = resolve_workbench_template_path(settings)
+    try:
+        data = render_workbench_docx_bytes(body, tpl)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    safe = "".join(
+        c if (c.isalnum() or c in "._-") else "_" for c in body.iteration_key.strip()
+    )[:120]
+    filename = f"Workbench_{safe or 'export'}.docx"
+    return Response(
+        content=data,
+        media_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "wordprocessingml.document"
+        ),
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

@@ -1,6 +1,9 @@
 .env
-tests
+weak_tests
 .venv
 .vscode
 /__pycache__/
 *.pyc
+*.egg-info
+templates/SCN_Aquila_*.docx
+templates/_test_workbench_render_output.docx

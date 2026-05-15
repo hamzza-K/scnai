@@ -49,6 +49,7 @@ class Settings:
     cosmos_container: str | None
     cosmos_embeddings_container: str | None
     cosmos_partition_key_field: str
+    workbench_docx_template: str | None
 
 
 def load_settings() -> Settings:
@@ -82,4 +83,5 @@ def load_settings() -> Settings:
         cosmos_partition_key_field=os.getenv(
             "COSMOS_PARTITION_KEY_FIELD", "document_type"
         ),
+        workbench_docx_template=os.getenv("WORKBENCH_DOCX_TEMPLATE"),
     )

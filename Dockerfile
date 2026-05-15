@@ -10,6 +10,7 @@ COPY .env .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY scnai ./scnai
+COPY templates ./templates
 
 EXPOSE 8000
 
